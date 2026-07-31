@@ -89,15 +89,24 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new FullscreenChromeClient());
     }
 
-    /** Loads our bundled JS from assets and injects it once the page finishes loading. */
+    /** Loads our bundled JS from assets and injects it at the right lifecycle points. */
     private class InjectingWebViewClient extends WebViewClient {
+        @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+            // Install the network-level ad block as early as possible, before
+            // YouTube's own scripts get a chance to make their first API call.
+            String early = readAsset("adblock_early.js");
+            if (early != null) {
+                web.evaluateJavascript(early, null);
+            }
+        }
+
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             String script = readAsset("script.js");
             if (script != null) {
-                // Wrap in an IIFE so repeated injections (SPA navigations) don't
-                // redeclare top-level variables and throw.
                 web.evaluateJavascript(script, null);
             }
         }
@@ -137,6 +146,8 @@ public class MainActivity extends Activity {
             customView = view;
             customViewCallback = callback;
 
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+
             android.widget.FrameLayout decor = (android.widget.FrameLayout) getWindow().getDecorView();
             decor.addView(customView, new android.widget.FrameLayout.LayoutParams(-1, -1));
             decor.setSystemUiVisibility(3846); // immersive fullscreen
@@ -156,6 +167,7 @@ public class MainActivity extends Activity {
             decor.removeView(customView);
             customView = null;
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
             if (customViewCallback != null) {
                 customViewCallback.onCustomViewHidden();
