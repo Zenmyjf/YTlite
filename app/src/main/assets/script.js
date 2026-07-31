@@ -1,36 +1,20 @@
-/* YT Lite - injected script (v1 skeleton)
- * Responsibilities so far:
- *   1. Hide known banner/companion ad containers (CSS)
- *   2. Auto-click the "Skip Ad" button when it appears (handles skippable
- *      in-stream ads; non-skippable pre-roll ads are NOT removed yet -
- *      that needs deeper player-response handling, deferred for now)
- *   3. Tell Android when the video starts/stops playing, so it knows
+/* YT Lite - injected script (runs at onPageFinished, once the DOM exists)
+ * Responsibilities:
+ *   1. Auto-click the "Skip Ad" button when it appears (handles skippable
+ *      in-stream ads that slip past the network-level block - e.g. the
+ *      very first ad shown before our fetch override could install)
+ *   2. Tell Android when the video starts/stops playing, so it knows
  *      whether to offer Picture-in-Picture on exit
+ *
+ * Network-level ad blocking lives in adblock_early.js, injected separately
+ * at onPageStarted so it's in place before YouTube's own first data call.
  */
 (function () {
 
 if (window.__ytliteInjected) return;
 window.__ytliteInjected = true;
 
-/* ---------- 1. Hide banner / companion ads ---------- */
-var style = document.createElement('style');
-style.textContent = `
-  ytd-display-ad-renderer,
-  ytd-promoted-sparkles-web-renderer,
-  ytd-in-feed-ad-layout-renderer,
-  ytd-banner-promo-renderer,
-  ytd-statement-banner-renderer,
-  ytd-ad-slot-renderer,
-  masthead-ad,
-  #masthead-ad,
-  .ytp-ad-overlay-container,
-  .ytp-ad-image-overlay {
-    display: none !important;
-  }
-`;
-document.head.appendChild(style);
-
-/* ---------- 2. Auto-click skip-ad button ---------- */
+/* ---------- 1. Auto-click skip-ad button ---------- */
 function clickSkipButtonIfPresent() {
   var selectors = [
     '.ytp-ad-skip-button',
@@ -48,7 +32,7 @@ function clickSkipButtonIfPresent() {
 }
 setInterval(clickSkipButtonIfPresent, 800);
 
-/* ---------- 3. Report play state to Android for PiP ---------- */
+/* ---------- 2. Report play state to Android for PiP ---------- */
 function attachVideoListeners() {
   var video = document.querySelector('video.video-stream, video');
   if (!video || video.__ytliteBound) return;
