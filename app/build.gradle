@@ -1,0 +1,30 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace "com.ytlite.app"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.ytlite.app"
+        minSdkVersion 21
+        targetSdkVersion 36
+        versionCode 1
+        versionName "0.1"
+    }
+
+    buildTypes {
+        debug {
+            // Debug builds are auto-signed with Android's debug key,
+            // so the APK from Actions can be installed directly - no
+            // separate signing step needed while we're iterating.
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.0'
+}
